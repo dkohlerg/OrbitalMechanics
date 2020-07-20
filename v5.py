@@ -34,9 +34,12 @@ if __name__ == '__main__':
     r10 = np.array([r_mag1,0,0])
     v10 = np.array([0,v_mag1,0])
 
-    op0 = OP(r00,v00,tspan,dt,cb)
-    op1 = OP(r10,v10,tspan,dt,cb)
+    c0 = np.concatenate((r00,v00))
+    c1 = np.concatenate((r10,v10))
+
+    op0 = OP(c0,tspan,dt)
+    op1 = OP(c1,tspan,dt)
 
     op0.propagateOrbit()
     op1.propagateOrbit()
-    t.plot_n_orbits([op0.rs,op1.rs],cb,labels=['ISS','random'],show_plot=True)
+    t.plot_n_orbits([op0.rs,op1.rs],labels=['ISS','random'],show_plot=True)

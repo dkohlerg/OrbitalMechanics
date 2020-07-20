@@ -4,11 +4,15 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 from mpl_toolkits.mplot3d import Axes3D
 import planetary_data as pd
+import tools as t
 
 class OrbitPropagator:
-    def __init__(self,r0,v0,tspan,dt,coes=False,cb=pd.earth):
-        self.r0 = r0
-        self.v0 = v0
+    def __init__(self,state0,tspan,dt,coes=False,cb=pd.earth):
+        if coes:
+            self.r0,self.v0 = t.coes2rv(state0,deg=True,mu=cb['mu'])
+        else:
+            self.r0=state0[:3]
+            self.v0=state0[3:]
         self.tspan = tspan
         self.dt = dt
         self.cb = cb

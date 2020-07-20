@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import planetary_data as pd
 
 class OrbitPropagator:
-    def __init__(self,r0,v0,tspan,dt,cb=pd.earth):
+    def __init__(self,r0,v0,tspan,dt,coes=False,cb=pd.earth):
         self.r0 = r0
         self.v0 = v0
         self.tspan = tspan
@@ -51,7 +51,7 @@ class OrbitPropagator:
                 step+=1
             self.rs=ys[:,:3]
 
-    def plot3d(self,show_plot='false',save_plot='false',title='Orbit Representation'):
+    def plot3d(self,show_plot=False,save_plot=False,title='Orbit Representation'):
         fig = plt.figure(figsize=(18,6))
         ax = fig.add_subplot(111,projection='3d')
 

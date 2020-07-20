@@ -39,4 +39,4 @@ if __name__ == '__main__':
 
     op0.propagateOrbit()
     op1.propagateOrbit()
-    t.plot_n_orbits([op0.rs,op1.rs],cb,labels=['ISS','random'],show_plot='true')
+    t.plot_n_orbits([op0.rs,op1.rs],cb,labels=['ISS','random'],show_plot=True)

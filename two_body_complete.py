@@ -28,4 +28,4 @@ if __name__ == '__main__':
     op = OP(r0,v0,tspan,dt,cb)
 
     op.propagateOrbit()
-    op.plot3d(show_plot='true',save_plot='false')
+    op.plot3d(show_plot=True)

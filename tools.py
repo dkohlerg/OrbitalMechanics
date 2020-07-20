@@ -4,7 +4,7 @@ from scipy.integrate import ode
 from mpl_toolkits.mplot3d import Axes3D
 import planetary_data as pd
 
-def plot_n_orbits(rs,cb,labels,show_plot='False',save_plot='False',title='Many orbits'):
+def plot_n_orbits(rs,cb,labels,show_plot=False,save_plot=False,title='Many orbits'):
     fig = plt.figure(figsize=(18,6))
     ax = fig.add_subplot(111,projection='3d')
 
@@ -43,3 +43,5 @@ def plot_n_orbits(rs,cb,labels,show_plot='False',save_plot='False',title='Many o
         plt.show()
     if save_plot:
         plt.savefig(title + 'png', dpi=300)
+
+#convert classical orvital elements to r and v vectors

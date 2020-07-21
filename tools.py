@@ -4,7 +4,9 @@ from scipy.integrate import ode
 from mpl_toolkits.mplot3d import Axes3D
 import planetary_data as pd
 import math as m
+import datetime
 
+# plot multiple orbits
 def plot_n_orbits(rs,labels,cb=pd.earth,show_plot=False,save_plot=False,title='Many orbits'):
     fig = plt.figure(figsize=(18,6))
     ax = fig.add_subplot(111,projection='3d')
@@ -45,7 +47,7 @@ def plot_n_orbits(rs,labels,cb=pd.earth,show_plot=False,save_plot=False,title='M
     if save_plot:
         plt.savefig(title + 'png', dpi=300)
 
-#convert classical orvital elements to r and v vectors
+#convert classical orbital elements to r and v vectors
 def coes2rv(coes,deg=False,mu=pd.earth['mu']):
     if deg:
         a,e,i,ta,aop,raan = coes
@@ -74,11 +76,56 @@ def coes2rv(coes,deg=False,mu=pd.earth['mu']):
 
 # inertial to periferical rotation matrix
 def eci2perif(raan,aop,i):
-    row0=[-m.sin(raan)*m.cos(i)*m.sin(aop)+m.cos(raan)*m.cos(aop),m.cos(raan)*m.cos(i)*m.sin(aop)+m.sin(raan)*m.cos(aop),m.sin(i)*m.sin(aop)]
-    row1=[-m.sin(raan)*m.cos(i)*m.cos(aop)-m.cos(raan)*m.sin(aop),m.cos(raan)*m.cos(i)*m.cos(aop)-m.sin(raan)*m.sin(aop),m.sin(i)*m.cos(aop)]
-    row2=[m.sin(raan)*m.sin(i),-m.cos(raan)*m.sin(i),m.cos(i)]
-    return np.array([row0,row1,row2])
+ row0=[-m.sin(raan)*m.cos(i)*m.sin(aop)+m.cos(raan)*m.cos(aop),m.cos(raan)*m.cos(i)*m.sin(aop)+m.sin(raan)*m.cos(aop),m.sin(i)*m.sin(aop)]
+ row1=[-m.sin(raan)*m.cos(i)*m.cos(aop)-m.cos(raan)*m.sin(aop),m.cos(raan)*m.cos(i)*m.cos(aop)-m.sin(raan)*m.sin(aop),m.sin(i)*m.cos(aop)]
+ row2=[m.sin(raan)*m.sin(i),-m.cos(raan)*m.sin(i),m.cos(i)]
+ return np.array([row0,row1,row2])
 
+
+# convert TLE to classical orbital elements
+def tle2coes(tle_filename,mu=pd.earth['mu']):
+    with open(tle_filename, 'r') as f:
+        lines=f.readlines()
+
+    line0 = lines[0].strip()
+    line1 = lines[1].strip().split()
+    line2 = lines[2].strip().split()
+
+    d2r = np.pi/180
+
+    #epoch year and day
+    epoch = line1[3]
+    y,m,d,h = calc_epoch(epoch)
+
+    e = float('0.' + line2[4])
+    i = float(line2[2])*d2r
+    aop = float(line2[5])*d2r
+    raan = float(line2[3])*d2r
+    Me = float(line2[6])*d2r
+    mean_motion = float(line2[7]) #revolutions/day
+    T = 1/(mean_motion*np.pi*2)*24*3600 #seconds
+    a = (T**2*mu)**(1/3.0)
+
+    E = ecc_anomaly([Me,e],'newton')
+    ta = true_annomaly([E,e])
+
+    return a,e,i,ta,aop,raan,[y,m,d,h]
+
+# calculate epoch
+def calc_epoch(epoch):
+       year = int('20' + epoch[:2])
+       epoch = epoch[2:].split('.')
+       day_of_year = int(epoch[0])-1
+       hour = float('0.' + epoch[1])*24.0
+       date = datetime.date(year,1,1) + datetime.timedelta(day_of_year)
+       month = float(date.month)
+       day = float(date.day)
+       return year,month,day,hour
+
+# calculate true annomaly
+def true_annomaly(arr):
+    E,e = arr
+    return 2.0*m.atan(m.sqrt((1+e)/(1-e))*m.tan(E/2.0))
 
 # calculate eccentric annomaly
 def ecc_anomaly(arr,method,tol=1e-8):
@@ -88,13 +135,13 @@ def ecc_anomaly(arr,method,tol=1e-8):
         if Me<m.pi/2.0: E0=Me+e/2.0
         else: E0 = Me-e
         for n in range(200):
-            ratio=(E0.e*m.sin(E0)-Me)/(1-e*m.cos(E0))
+            ratio=(E0-e*m.sin(E0)-Me)/(1-e*m.cos(E0))
             if abs(ratio)<tol:
                 if n == 0: return E0
                 else: return E1
             else:
                 E1=E0-ratio
-                E0 = E1
+                E0=E1
         #did not converge
         return False
     elif method == 'tae':

@@ -7,15 +7,33 @@ import planetary_data as pd
 import tools as t
 
 class OrbitPropagator:
-    def __init__(self,state0,tspan,dt,coes=False,cb=pd.earth):
+    def __init__(self,state0,tspan,dt,coes=False,deg=True,cb=pd.earth):
         if coes:
-            self.r0,self.v0 = t.coes2rv(state0,deg=True,mu=cb['mu'])
+            self.r0,self.v0 = t.coes2rv(state0[:6],deg,mu=cb['mu'])
         else:
             self.r0=state0[:3]
             self.v0=state0[3:]
         self.tspan = tspan
         self.dt = dt
         self.cb = cb
+
+        # Number of steps
+        self.n_steps = int(np.ceil(self.tspan/self.dt))
+
+        # Preallocate memory
+        self.ys = np.zeros((self.n_steps,6))
+        self.ts = np.zeros((self.n_steps,1))
+
+        # initial conditions
+        self.ys[0] = np.concatenate((self.r0,self.v0))
+        self.step = 1
+
+        # Initiate solver
+        self.solver = ode(self.diffy_q)
+        self.solver.set_integrator('lsoda')
+        self.solver.set_initial_value(self.ys[0],0)
+
+        self.propagateOrbit()
 
     def diffy_q(self,q,y):
 
@@ -31,29 +49,14 @@ class OrbitPropagator:
         return [vx,vy,vz,ax,ay,az]
 
     def propagateOrbit(self):
-            # Number of steps
-            n_steps = int(np.ceil(self.tspan/self.dt))
-
-            # Preallocate memory
-            ys = np.zeros((n_steps,6))
-            ts = np.zeros((n_steps,1))
-
-            # initial conditions
-            ys[0] = np.concatenate((self.r0,self.v0))
-            step = 1
-
-            # Initiate solver
-            solver = ode(self.diffy_q)
-            solver.set_integrator('lsoda')
-            solver.set_initial_value(ys[0],0)
-
-            # Propagate orbit
-            while solver.successful() and step<n_steps:
-                solver.integrate(solver.t+self.dt)
-                ts[step] = solver.t
-                ys[step] = solver.y
-                step+=1
-            self.rs=ys[:,:3]
+        # Propagate orbit
+        while self.solver.successful() and self.step<self.n_steps:
+            self.solver.integrate(self.solver.t+self.dt)
+            self.ts[self.step] = self.solver.t
+            self.ys[self.step] = self.solver.y
+            self.step+=1
+        self.rs=self.ys[:,:3]
+        self.vs=self.ys[:,3:]
 
     def plot3d(self,show_plot=False,save_plot=False,title='Orbit Representation'):
         fig = plt.figure(figsize=(18,6))

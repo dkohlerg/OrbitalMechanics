@@ -8,7 +8,6 @@ import tools as t
 
 plt.style.use('dark_background')
 
-
 # Timespan : 1 day
 tspan = 3600 * 5
 # Timestep

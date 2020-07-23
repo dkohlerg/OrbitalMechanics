@@ -76,6 +76,14 @@ class OrbitPropagator:
 
         return [vx,vy,vz,a[0],a[1],a[2]]
 
+    def calculate_coes(self,deg=True):
+        print('Calculating COEs...')
+
+        self.coes = np.zeros((self.n_steps,6))
+
+        for n in range (self.n_steps):
+            self.coes[n,:] = t.rv2coes(self.rs[n,:],self.vs[n,:],mu=self.cb['mu'],deg=deg)
+
     def propagateOrbit(self):
         # Propagate orbit
         while self.solver.successful() and self.step<self.n_steps:
@@ -85,6 +93,73 @@ class OrbitPropagator:
             self.step+=1
         self.rs=self.ys[:,:3]
         self.vs=self.ys[:,3:]
+
+    def plot_coes(self,hours=False,days=False,show_plot=False,save_plot=False,title='COEs',figsize=(16,8)):
+        print('Plotting COEs...')
+        # create fig and axes
+        fig,axs = plt.subplots(nrows=2,ncols=3,figsize=figsize)
+        # fig title
+        fig.suptitle(title,fontsize=20)
+
+        # x axis
+        if hours:
+            ts = self.ts/3600.0
+            xlabel="Time elapsed (Hours)"
+        elif days:
+            ts = self.ts/3600/24.0
+            xlabel="Time elapsed (Days)"
+        else:
+            ts = self.ts
+            xlabel="Time elapsed (seconds)"
+
+        #plot true annomaly
+        axs[0,0].plot(ts,self.coes[:,3])
+        axs[0,0].set_title("True annomaly vs Time")
+        axs[0,0].grid(True)
+        axs[0,0].set_ylabel("Angle (deg)")
+        axs[0,0].set_xlabel(xlabel)
+
+        #plot semimajor axis
+        axs[1,0].plot(ts,self.coes[:,0])
+        axs[1,0].set_title("Semi-Major axis  vs Time")
+        axs[1,0].grid(True)
+        axs[1,0].set_ylabel("Semi-Major axis (km)")
+        axs[1,0].set_xlabel(xlabel)
+
+        #plot eccenntricity
+        axs[0,1].plot(ts,self.coes[:,1])
+        axs[0,1].set_title("Eccentricity  vs Time")
+        axs[0,1].grid(True)
+        axs[0,1].set_xlabel(xlabel)
+
+        #plot AOP
+        axs[0,2].plot(ts,self.coes[:,4])
+        axs[0,2].set_title("Argument of Periapsis vs Time")
+        axs[0,2].grid(True)
+        axs[0,2].set_ylabel("Angle (deg)")
+        axs[0,2].set_xlabel(xlabel)
+
+        #plot inclination
+        axs[1,1].plot(ts,self.coes[:,2])
+        axs[1,1].set_title("Inclination vs Time")
+        axs[1,1].grid(True)
+        axs[1,1].set_ylabel("Angle (deg)")
+        axs[1,1].set_xlabel(xlabel)
+
+        #plot RAAN
+        axs[1,2].plot(ts,self.coes[:,5])
+        axs[1,2].set_title("RA of Ascending Node vs Time")
+        axs[1,2].grid(True)
+        axs[1,2].set_ylabel("Angle (deg)")
+        axs[1,2].set_xlabel(xlabel)
+
+        if show_plot:
+            plt.show()
+
+        if save_plot:
+            plt.savefig(title + '.png', dpi=300)
+
+
 
     def plot3d(self,show_plot=False,save_plot=False,title='Orbit Representation'):
         fig = plt.figure(figsize=(18,6))
